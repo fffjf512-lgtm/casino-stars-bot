@@ -128,8 +128,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <circle class="progress" id="countdown-progress" cx="80" cy="80" r="70"/>
       </svg>
     </div>
-    <div class="multiplier-big waiting" id="mult-display">WAITING</div>
-    <div class="phase-label" id="phase-label">Next round soon</div>
+    <div class="multiplier-big waiting" id="mult-display" style="display:none"></div>
+    <div class="phase-label" id="phase-label" style="display:none"></div>
   </div>
 
   <div class="controls">
@@ -535,26 +535,26 @@ async function pollGame(){
     gameMult=s.multiplier;
 
     if(s.phase==='betting'){
-      md.className='multiplier-big waiting';
-    const t=Math.round(s.timer);
-    md.textContent=t>0?t:i18n[lang].waiting;
-    pl.textContent=i18n[lang].placeYourBets;
+      md.style.display='none';
+      pl.style.display='none';
       cr.style.display='block';
       const offset=440-(440*(t/5));
       document.getElementById('countdown-progress').style.strokeDashoffset=offset;
-      if(prevPhase!=='betting'){myBetPlaced=false;linePoints=[];displayMult=1}
+      if(prevPhase!=='betting'){myBetPlaced=false;candles=[];displayMult=1;lastCandleMult=1;candleTimer=0}
       updateMainBtn();
 
     }else if(s.phase==='flying'){
+      md.style.display='block';
       md.className='multiplier-big flying';
       md.textContent='x'+displayMult.toFixed(2);
-      pl.textContent=i18n[lang].flying;
+      pl.style.display='none';
       cr.style.display='none';
 
     }else if(s.phase==='crashed'){
+      md.style.display='block';
       md.className='multiplier-big crashed';
       md.textContent='x'+s.crash_point.toFixed(2);
-      pl.textContent=i18n[lang].crashed;
+      pl.style.display='none';
       cr.style.display='none';
     }
 
