@@ -40,10 +40,15 @@ lock = threading.Lock()
 
 def get_crash_point():
     roll = random.random()
+    low = 1.0
+    high = 100.0
     for mult, prob in CRASH_CURVE:
         if roll <= prob:
-            return round(mult, 2)
-    return CRASH_CURVE[-1][0]
+            high = mult
+            break
+        low = mult
+    raw = low + (high - low) * random.random()
+    return round(raw, 2)
 
 
 def load_users():
@@ -80,8 +85,7 @@ def game_loop():
 
         current = 1.00
         while current < crash_point:
-            increment = random.uniform(0.01, 0.08) * (1 + current * 0.05)
-            current = round(current + increment, 2)
+            current = round(current + 0.01, 2)
             if current > crash_point:
                 current = crash_point
 
@@ -101,8 +105,8 @@ def game_loop():
                                 users[uid]["games"] = users[uid].get("games", 0) + 1
                                 save_users(users)
 
-            delay = max(0.05, 0.15 - current * 0.005)
-            time.sleep(delay)
+            speed = max(0.06, 0.12 - current * 0.002)
+            time.sleep(speed)
 
         with lock:
             game_state["phase"] = "crashed"
