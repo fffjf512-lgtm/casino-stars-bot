@@ -9,8 +9,8 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 app = Flask(__name__)
 
 DB_FILE = os.path.join(os.path.dirname(__file__), "users.json")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
-WEBAPP_URL = os.environ.get("WEBAPP_URL", "")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8991377045:AAHt8HZ-1Ms6WDuxTSb18FkjXQEPR8uKoFc")
+WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://casino-stars-bot.onrender.com")
 PORT = int(os.environ.get("PORT", 5000))
 
 CRASH_POINTS = [
