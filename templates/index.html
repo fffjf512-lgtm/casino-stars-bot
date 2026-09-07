@@ -182,7 +182,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-let gamePhase='betting',gameMult=1,myBetPlaced=false,prevPhase='',bet=10;
+let gamePhase='betting',gameMult=1,myBetPlaced=false,prevPhase='',bet=10,displayMult=1;
 const AVATAR_COLORS=['#e94560','#2979ff','#00d26a','#f5c518','#9c27b0','#ff6b35','#00bcd4','#e91e63'];
 
 function showScreen(id){
@@ -218,7 +218,7 @@ async function init(){
   const r=await fetch('/api/user',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,username:uname})});
   user=await r.json();user.user_id=uid;user.username=uname;
   updateBalance();
-  setInterval(pollGame,500);
+  setInterval(pollGame,200);
   pollGame();
 }
 
@@ -501,7 +501,7 @@ async function pollGame(){
 
     }else if(s.phase==='flying'){
       md.className='multiplier-big flying';
-      md.textContent='x'+s.multiplier.toFixed(2);
+      md.textContent='x'+displayMult.toFixed(2);
       pl.textContent='Flying... Cash out before crash!';
       cr.style.display='none';
 
@@ -520,7 +520,13 @@ async function pollGame(){
 }
 
 function animate(){
-  drawGame(gameMult,gamePhase);
+  if(gamePhase==='flying'){
+    displayMult+=(gameMult-displayMult)*0.3;
+    if(Math.abs(gameMult-displayMult)<0.005)displayMult=gameMult;
+  }else{
+    displayMult=gameMult;
+  }
+  drawGame(displayMult,gamePhase);
   requestAnimationFrame(animate);
 }
 
