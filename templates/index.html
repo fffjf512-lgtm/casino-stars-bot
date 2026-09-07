@@ -484,9 +484,9 @@ function drawGame(mult,phase){
 
     const pulseR=2+Math.sin(Date.now()*.005)*1;
     ctx.fillStyle='rgba(0,200,83,.2)';
-    ctx.beginPath();ctx.arc(lx,ly,pulseR+4,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(lx,ly+12,pulseR+4,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#00c853';
-    ctx.beginPath();ctx.arc(lx,ly,pulseR,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(lx,ly+12,pulseR,0,Math.PI*2);ctx.fill();
   }
 }
 
