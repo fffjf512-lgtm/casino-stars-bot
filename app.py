@@ -1,9 +1,10 @@
 import os
 import json
 import random
-import sys
 
 from flask import Flask, render_template, jsonify, request
+from telegram import Update, WebAppInfo, MenuButtonWebApp, BotCommand
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 app = Flask(__name__)
 
@@ -127,37 +128,53 @@ def api_rocket_cashout():
     return jsonify({"balance": users[user_id]["balance"], "won": profit})
 
 
+telegram_app = None
+
+
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if WEBAPP_URL:
+        button = MenuButtonWebApp(text="Open Casino", web_app=WebAppInfo(url=WEBAPP_URL))
+        await context.bot.set_chat_menu_button(chat_id=user.id, menu_button=button)
+    await context.bot.set_my_commands([BotCommand("start", "Open Casino Stars")])
+    await update.message.reply_text(
+        f"Hi, {user.first_name}!\n\nPress the menu button below to open casino."
+    )
+
+
+@app.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
+def webhook_handler():
+    if telegram_app:
+        update = Update.de_json(request.get_json(force=True), telegram_app)
+        telegram_app.process_update(update)
+    return "ok"
+
+
+@app.route("/setup", methods=["GET"])
+def setup():
+    import asyncio
+
+    async def _setup():
+        global telegram_app
+        if not BOT_TOKEN:
+            return "No BOT_TOKEN"
+        telegram_app = Application.builder().token(BOT_TOKEN).build()
+        telegram_app.add_handler(CommandHandler("start", start_command))
+        await telegram_app.initialize()
+        await telegram_app.bot.delete_webhook()
+        webhook_url = f"{WEBAPP_URL}/webhook/{BOT_TOKEN}"
+        result = await telegram_app.bot.set_webhook(url=webhook_url)
+        return f"Webhook set: {webhook_url} result: {result}"
+
+    loop = asyncio.new_event_loop()
+    result = loop.run_until_complete(_setup())
+    return result
+
+
+@app.route("/health")
+def health():
+    return "ok"
+
+
 if __name__ == "__main__":
-    if BOT_TOKEN:
-        import threading
-        import asyncio
-        from telegram import Update, WebAppInfo, MenuButtonWebApp, BotCommand
-        from telegram.ext import Application, CommandHandler, ContextTypes
-
-        async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            user = update.effective_user
-            if WEBAPP_URL:
-                button = MenuButtonWebApp(text="Open Casino", web_app=WebAppInfo(url=WEBAPP_URL))
-                await context.bot.set_chat_menu_button(chat_id=user.id, menu_button=button)
-            await context.bot.set_my_commands([BotCommand("start", "Open Casino Stars")])
-            await update.message.reply_text(
-                f"Hi, {user.first_name}!\n\nPress the menu button below to open casino."
-            )
-
-        async def run_bot():
-            app_bot = Application.builder().token(BOT_TOKEN).build()
-            app_bot.add_handler(CommandHandler("start", start_command))
-            await app_bot.initialize()
-            await app_bot.start()
-            await app_bot.updater.start_polling()
-            print("Bot started polling!")
-            await asyncio.Event().wait()
-
-        def start_bot_thread():
-            asyncio.run(run_bot())
-
-        t = threading.Thread(target=start_bot_thread, daemon=True)
-        t.start()
-        print(f"Bot thread started, WEBAPP_URL={WEBAPP_URL}")
-
     app.run(host="0.0.0.0", port=PORT, debug=False)
