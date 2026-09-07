@@ -157,9 +157,13 @@ def start_bot_thread():
     loop.run_forever()
 
 
-if __name__ == "__main__":
-    if WEBAPP_URL:
+def start_bot_once():
+    if WEBAPP_URL and not getattr(app, '_bot_started', False):
+        app._bot_started = True
         t = threading.Thread(target=start_bot_thread, daemon=True)
         t.start()
-        time.sleep(3)
+
+start_bot_once()
+
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
