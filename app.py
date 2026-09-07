@@ -1,6 +1,9 @@
 import os
 import json
 import random
+import threading
+import asyncio
+import time
 
 from flask import Flask, render_template, jsonify, request
 from telegram import Update, WebAppInfo, MenuButtonWebApp, BotCommand
@@ -128,7 +131,9 @@ def api_rocket_cashout():
     return jsonify({"balance": users[user_id]["balance"], "won": profit})
 
 
-telegram_app = None
+@app.route("/health")
+def health():
+    return "ok"
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -142,39 +147,25 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-@app.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
-def webhook_handler():
-    if telegram_app:
-        update = Update.de_json(request.get_json(force=True), telegram_app)
-        telegram_app.process_update(update)
-    return "ok"
-
-
-@app.route("/setup", methods=["GET"])
-def setup():
-    import asyncio
-
-    async def _setup():
-        global telegram_app
-        if not BOT_TOKEN:
-            return "No BOT_TOKEN"
-        telegram_app = Application.builder().token(BOT_TOKEN).build()
-        telegram_app.add_handler(CommandHandler("start", start_command))
-        await telegram_app.initialize()
-        await telegram_app.bot.delete_webhook()
-        webhook_url = f"{WEBAPP_URL}/webhook/{BOT_TOKEN}"
-        result = await telegram_app.bot.set_webhook(url=webhook_url)
-        return f"Webhook set: {webhook_url} result: {result}"
-
+def run_bot():
     loop = asyncio.new_event_loop()
-    result = loop.run_until_complete(_setup())
-    return result
+    asyncio.set_event_loop(loop)
 
+    async def main():
+        application = Application.builder().token(BOT_TOKEN).build()
+        application.add_handler(CommandHandler("start", start_command))
+        await application.initialize()
+        await application.start()
+        print("Bot polling started!")
+        await application.updater.start_polling(drop_pending_updates=True)
+        await asyncio.Event().wait()
 
-@app.route("/health")
-def health():
-    return "ok"
+    loop.run_until_complete(main())
 
 
 if __name__ == "__main__":
+    t = threading.Thread(target=run_bot, daemon=True)
+    t.start()
+    print(f"Bot starting... WEBAPP_URL={WEBAPP_URL}")
+    time.sleep(1)
     app.run(host="0.0.0.0", port=PORT, debug=False)
