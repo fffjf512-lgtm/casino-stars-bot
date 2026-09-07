@@ -1,9 +1,6 @@
 import os
 import json
 import random
-import threading
-import asyncio
-import time
 
 from flask import Flask, render_template, jsonify, request
 from telegram import Update, WebAppInfo, MenuButtonWebApp, BotCommand
@@ -12,8 +9,9 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 app = Flask(__name__)
 
 DB_FILE = os.path.join(os.path.dirname(__file__), "users.json")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8991377045:AAHt8HZ-1Ms6WDuxTSb18FkjXQEPR8uKoFc")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 WEBAPP_URL = os.environ.get("WEBAPP_URL", "")
+PORT = int(os.environ.get("PORT", 5000))
 
 CRASH_POINTS = [
     (1.0, 0.03), (1.1, 0.15), (1.2, 0.25), (1.5, 0.45),
@@ -130,6 +128,13 @@ def api_rocket_cashout():
     return jsonify({"balance": users[user_id]["balance"], "won": profit})
 
 
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    update = Update.de_json(request.get_json(force=True), bot_app)
+    bot_app.process_update(update)
+    return "ok"
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     button = MenuButtonWebApp(text="Open Casino", web_app=WebAppInfo(url=WEBAPP_URL))
@@ -142,28 +147,23 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def run_bot():
-    app_bot = Application.builder().token(BOT_TOKEN).build()
-    app_bot.add_handler(CommandHandler("start", start_command))
-    await app_bot.initialize()
-    await app_bot.start()
-    await app_bot.updater.start_polling()
+bot_app = None
 
+if BOT_TOKEN and WEBAPP_URL:
+    bot_app = Application.builder().token(BOT_TOKEN).build()
+    bot_app.add_handler(CommandHandler("start", start_command))
 
-def start_bot_thread():
+    import asyncio
+
+    async def setup_webhook():
+        await bot_app.initialize()
+        webhook_url = f"{WEBAPP_URL}/webhook"
+        await bot_app.bot.set_webhook(url=webhook_url)
+        print(f"Webhook set to {webhook_url}")
+
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(run_bot())
-    loop.run_forever()
-
-
-def start_bot_once():
-    if WEBAPP_URL and not getattr(app, '_bot_started', False):
-        app._bot_started = True
-        t = threading.Thread(target=start_bot_thread, daemon=True)
-        t.start()
-
-start_bot_once()
+    loop.run_until_complete(setup_webhook())
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
+    app.run(host="0.0.0.0", port=PORT, debug=False)
