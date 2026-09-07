@@ -148,19 +148,34 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def run_bot():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    import traceback
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-    async def main():
-        application = Application.builder().token(BOT_TOKEN).build()
-        application.add_handler(CommandHandler("start", start_command))
-        await application.initialize()
-        await application.start()
-        print("Bot polling started!")
-        await application.updater.start_polling(drop_pending_updates=True)
-        await asyncio.Event().wait()
+        async def main():
+            application = Application.builder().token(BOT_TOKEN).build()
+            application.add_handler(CommandHandler("start", start_command))
+            await application.initialize()
+            await application.start()
+            print("Bot polling started!", flush=True)
+            await application.updater.start_polling(drop_pending_updates=True)
+            await asyncio.Event().wait()
 
-    loop.run_until_complete(main())
+        loop.run_until_complete(main())
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"BOT ERROR: {e}\n{tb}", flush=True)
+        with open("bot_error.log", "w") as f:
+            f.write(tb)
+
+
+@app.route("/logs")
+def logs():
+    if os.path.exists("bot_error.log"):
+        with open("bot_error.log") as f:
+            return f.read()
+    return "no errors"
 
 
 if __name__ == "__main__":
