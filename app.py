@@ -84,6 +84,7 @@ def game_loop():
             game_state["crash_point"] = crash_point
 
         current = 1.00
+        speed = 0.10
         while current < crash_point:
             current = round(current + 0.01, 2)
             if current > crash_point:
@@ -99,13 +100,14 @@ def game_loop():
                             player["cashout_mult"] = current
                             users = load_users()
                             if uid in users:
-                                payout = int(player["bet"] * current)
+                                payout = round(player["bet"] * current, 1)
                                 users[uid]["balance"] += payout
                                 users[uid]["total_won"] = users[uid].get("total_won", 0) + payout
                                 users[uid]["games"] = users[uid].get("games", 0) + 1
                                 save_users(users)
 
-            speed = max(0.06, 0.12 - current * 0.002)
+            speed = speed + random.uniform(-0.02, 0.02)
+            speed = max(0.04, min(0.18, speed))
             time.sleep(speed)
 
         with lock:
@@ -187,7 +189,7 @@ def api_game_state():
             name = users.get(uid, {}).get("username", "Player")
             profit = 0
             if p.get("cashed_out"):
-                profit = int(p["bet"] * p.get("cashout_mult", 1))
+                profit = round(p["bet"] * p.get("cashout_mult", 1), 1)
             players_list.append({
                 "user_id": uid,
                 "username": name,
@@ -222,7 +224,7 @@ def api_game_bet():
         users = load_users()
         if user_id not in users:
             return jsonify({"error": "user not found"}), 404
-        if bet <= 0 or bet > users[user_id]["balance"]:
+        if bet < 10 or bet > users[user_id]["balance"]:
             return jsonify({"error": "insufficient balance"}), 400
         if user_id in game_state["players"]:
             return jsonify({"error": "already bet"}), 400
@@ -258,7 +260,7 @@ def api_game_cashout():
         game_state["players"][user_id]["cashout_mult"] = mult
 
         bet = game_state["players"][user_id]["bet"]
-        payout = int(bet * mult)
+        payout = round(bet * mult, 1)
 
         users = load_users()
         if user_id in users:

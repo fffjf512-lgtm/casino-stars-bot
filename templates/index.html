@@ -130,13 +130,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="controls">
     <div class="bet-row">
       <div class="bet-chips">
-        <button class="bet-chip active" onclick="setBet(this,5)">5</button>
-        <button class="bet-chip" onclick="setBet(this,10)">10</button>
+        <button class="bet-chip active" onclick="setBet(this,10)">10</button>
         <button class="bet-chip" onclick="setBet(this,25)">25</button>
         <button class="bet-chip" onclick="setBet(this,50)">50</button>
         <button class="bet-chip" onclick="setBet(this,100)">100</button>
+        <button class="bet-chip" onclick="setBet(this,250)">250</button>
       </div>
-      <input class="bet-input" id="bet-input" type="number" value="5" min="1">
+        <input class="bet-input" id="bet-input" type="number" value="10" min="10">
     </div>
     <div class="auto-row">
       <span class="auto-label">Auto cashout:</span>
@@ -182,7 +182,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-let gamePhase='betting',gameMult=1,myBetPlaced=false,prevPhase='',bet=5;
+let gamePhase='betting',gameMult=1,myBetPlaced=false,prevPhase='',bet=10;
 const AVATAR_COLORS=['#e94560','#2979ff','#00d26a','#f5c518','#9c27b0','#ff6b35','#00bcd4','#e91e63'];
 
 function showScreen(id){
