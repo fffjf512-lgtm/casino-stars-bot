@@ -41,6 +41,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .countdown-ring svg{width:100%;height:100%}
 .countdown-ring .bg{fill:none;stroke:rgba(255,255,255,.05);stroke-width:6}
 .countdown-ring .progress{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;stroke-dasharray:440;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear;transform:rotate(-90deg);transform-origin:center}
+.countdown-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;font-weight:900;color:var(--accent)}
 
 .phase-label{position:relative;z-index:10;font-size:13px;color:var(--text2);margin-top:8px;letter-spacing:1px;text-transform:uppercase}
 
@@ -127,6 +128,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <circle class="bg" cx="80" cy="80" r="70"/>
         <circle class="progress" id="countdown-progress" cx="80" cy="80" r="70"/>
       </svg>
+      <div class="countdown-text" id="countdown-text">5</div>
     </div>
     <div class="multiplier-big waiting" id="mult-display" style="display:none"></div>
     <div class="phase-label" id="phase-label" style="display:none"></div>
@@ -540,6 +542,7 @@ async function pollGame(){
       cr.style.display='block';
       const offset=440-(440*(t/5));
       document.getElementById('countdown-progress').style.strokeDashoffset=offset;
+      document.getElementById('countdown-text').textContent=t;
       if(prevPhase!=='betting'){myBetPlaced=false;candles=[];displayMult=1;lastCandleMult=1;candleTimer=0}
       updateMainBtn();
 
